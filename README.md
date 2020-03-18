@@ -9,14 +9,25 @@ docker run -d \
   --env AWS_ACCESS_KEY_ID=awsaccesskeyid \
   --env AWS_SECRET_ACCESS_KEY=awssecretaccesskey \
   --env BUCKET=s3bucket
-  --env MONGODB_HOST=mongodb.host \
+  --env MONGODB_HOST=mongodb://mongodb0.example.com:27017/db \
   --env MONGODB_PORT=27017 \
   --env MONGODB_USER=admin \
   --env MONGODB_PASS=password \
-  halvves/mongodb-backup-s3
+  dryna/mongodb-backup-s3:4.2
 ```
 
-If you link `halvves/mongodb-backup-s3` to a mongodb container with an alias named mongodb, this image will try to auto load the `host`, `port`, `user`, `pass` if possible. Like this:
+using with MONGODB_URI
+
+```
+docker run -d \
+  --env AWS_ACCESS_KEY_ID=awsaccesskeyid \
+  --env AWS_SECRET_ACCESS_KEY=awssecretaccesskey \
+  --env BUCKET=s3bucket
+  --env MONGODB_URI=mongodb.host \
+  dryna/mongodb-backup-s3:4.2
+```
+
+If you link `dryna/mongodb-backup-s3` to a mongodb container with an alias named mongodb, this image will try to auto load the `host`, `port`, `user`, `pass` if possible. Like this:
 
 ```
 docker run -d \
@@ -26,7 +37,7 @@ docker run -d \
   --env BACKUP_FOLDER=a/sub/folder/path/ \
   --env INIT_BACKUP=true \
   --link my_mongo_db:mongodb \
-  halvves/mongodb-backup-s3
+  dryna/mongodb-backup-s3:4.2
 ```
 
 Add to a docker-compose.yml to enhance your robotic army:
@@ -34,7 +45,7 @@ Add to a docker-compose.yml to enhance your robotic army:
 For automated backups
 ```
 mongodbbackup:
-  image: 'halvves/mongodb-backup-s3:latest'
+  image: 'dryna/mongodb-backup-s3:4.2'
   links:
     - mongodb
   environment:
@@ -48,7 +59,7 @@ mongodbbackup:
 Or use `INIT_RESTORE` with `DISABLE_CRON` for seeding/restoring/starting a db (great for a fresh instance or a dev machine)
 ```
 mongodbbackup:
-  image: 'halvves/mongodb-backup-s3:latest'
+  image: 'dryna/mongodb-backup-s3:4.2'
   links:
     - mongodb
   environment:
@@ -69,6 +80,8 @@ mongodbbackup:
 `BUCKET`: - your s3 bucket
 
 `BACKUP_FOLDER`: - name of folder or path to put backups (eg `myapp/db_backups/`). defaults to root of bucket.
+
+`MONGODB_URI` - Mongo db uri can be used instead of MONGODB_HOST, MONGODB_PORT, MONGODB_USER, MONGODB_DB
 
 `MONGODB_HOST` - the host/ip of your mongodb database
 

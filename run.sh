@@ -12,11 +12,24 @@ S3PATH="s3://$BUCKET/$BACKUP_FOLDER"
 [[ ( -z "${MONGODB_USER}" ) && ( -n "${MONGODB_PASS}" ) ]] && MONGODB_USER='admin'
 
 [[ ( -n "${MONGODB_USER}" ) ]] && USER_STR=" --username ${MONGODB_USER}"
-[[ ( -n "${MONGODB_PASS}" ) ]] && PASS_STR=" --password ${MONGODB_PASS}"
+[[ ( -n "${MONGODB_PASS}" ) ]] && PASS_STR=" --password '${MONGODB_PASS}'"
 [[ ( -n "${MONGODB_DB}" ) ]] && DB_STR=" --db ${MONGODB_DB}"
 
+MONGO_DUMP_COMMAND="mongodump --host ${MONGODB_HOST} --port ${MONGODB_PORT} ${USER_STR}${PASS_STR}${DB_STR} --archive=\${BACKUP_NAME} --gzip ${EXTRA_OPTS}"
+[[ ( -n "${MONGODB_URI}" ) ]] && MONGO_DUMP_COMMAND="mongodump --uri='${MONGODB_URI}' --archive=\${BACKUP_NAME} --gzip ${EXTRA_OPTS}"
+
+MONGO_RESTORE_COMMAND="mongorestore --host ${MONGODB_HOST} --port ${MONGODB_PORT} ${USER_STR}${PASS_STR}${DB_STR} --drop ${EXTRA_OPTS} --archive=\${RESTORE_ME}"
+[[ ( -n "${MONGODB_URI}" ) ]] && MONGO_RESTORE_COMMAND="mongorestore --uri='${MONGODB_URI}' --drop ${EXTRA_OPTS} --archive=\${RESTORE_ME}"
+
 # Export AWS Credentials into env file for cron job
-printenv | sed 's/^\([a-zA-Z0-9_]*\)=\(.*\)$/export \1="\2"/g' | grep -E "^export AWS" > /root/project_env.sh
+#printenv | sed 's/^\([a-zA-Z0-9_]*\)=\(.*\)$/export \1="\2"/g' | grep -E "^export AWS" > /root/project_env.sh
+
+
+if [ -n "${MONGODB_URI}" ]; then
+    echo "=> Create a backup on the startup"
+    /backup.sh
+fi
+
 
 echo "=> Creating backup script"
 rm -f /backup.sh
@@ -31,7 +44,7 @@ S3LATEST=${S3PATH}latest.dump.gz
 aws configure set default.s3.signature_version s3v4
 
 echo "=> Backup started"
-if mongodump --host ${MONGODB_HOST} --port ${MONGODB_PORT} ${USER_STR}${PASS_STR}${DB_STR} --archive=\${BACKUP_NAME} --gzip ${EXTRA_OPTS} && aws s3 cp \${BACKUP_NAME} \${S3BACKUP} && aws s3 cp \${S3BACKUP} \${S3LATEST} && rm \${BACKUP_NAME} ;then
+if ${MONGO_DUMP_COMMAND} && aws s3 cp \${BACKUP_NAME} \${S3BACKUP} && aws s3 cp \${S3BACKUP} \${S3LATEST} && rm \${BACKUP_NAME} ;then
     echo "   > Backup succeeded"
 else
     echo "   > Backup failed"
@@ -56,7 +69,7 @@ S3RESTORE=${S3PATH}\${RESTORE_ME}
 aws configure set default.s3.signature_version s3v4
 
 echo "=> Restore database from \${RESTORE_ME}"
-if aws s3 cp \${S3RESTORE} \${RESTORE_ME} && mongorestore --host ${MONGODB_HOST} --port ${MONGODB_PORT} ${USER_STR}${PASS_STR}${DB_STR} --drop --archive=\${RESTORE_ME} --gzip && rm \${RESTORE_ME}; then
+if aws s3 cp \${S3RESTORE} \${RESTORE_ME} && ${MONGO_RESTORE_COMMAND} && rm \${RESTORE_ME}; then
     echo "   Restore succeeded"
 else
     echo "   Restore failed"
