@@ -45,7 +45,7 @@ Add to a docker-compose.yml to enhance your robotic army:
 For automated backups
 ```
 mongodbbackup:
-  image: 'dryna/mongodb-backup-s3:4.2'
+  image: 'dryna/mongodb-backup-s3:4.3'
   links:
     - mongodb
   environment:
@@ -59,7 +59,7 @@ mongodbbackup:
 Or use `INIT_RESTORE` with `DISABLE_CRON` for seeding/restoring/starting a db (great for a fresh instance or a dev machine)
 ```
 mongodbbackup:
-  image: 'dryna/mongodb-backup-s3:4.2'
+  image: 'dryna/mongodb-backup-s3:4.3'
   links:
     - mongodb
   environment:

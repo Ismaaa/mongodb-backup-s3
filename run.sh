@@ -18,12 +18,11 @@ S3PATH="s3://$BUCKET/$BACKUP_FOLDER"
 MONGO_DUMP_COMMAND="mongodump --host ${MONGODB_HOST} --port ${MONGODB_PORT} ${USER_STR}${PASS_STR}${DB_STR} --archive=\${BACKUP_NAME} --gzip ${EXTRA_OPTS}"
 [[ ( -n "${MONGODB_URI}" ) ]] && MONGO_DUMP_COMMAND="mongodump --uri='${MONGODB_URI}' --archive=\${BACKUP_NAME} --gzip ${EXTRA_OPTS}"
 
-MONGO_RESTORE_COMMAND="mongorestore --host ${MONGODB_HOST} --port ${MONGODB_PORT} ${USER_STR}${PASS_STR}${DB_STR} --drop ${EXTRA_OPTS} --archive=\${RESTORE_ME}"
-[[ ( -n "${MONGODB_URI}" ) ]] && MONGO_RESTORE_COMMAND="mongorestore --uri='${MONGODB_URI}' --drop ${EXTRA_OPTS} --archive=\${RESTORE_ME}"
+MONGO_RESTORE_COMMAND="mongorestore --host ${MONGODB_HOST} --port ${MONGODB_PORT} ${USER_STR}${PASS_STR}${DB_STR} --drop --gzip ${EXTRA_OPTS} --archive=\${RESTORE_ME}"
+[[ ( -n "${MONGODB_URI}" ) ]] && MONGO_RESTORE_COMMAND="mongorestore --uri='${MONGODB_URI}' --drop --gzip ${EXTRA_OPTS} --archive=\${RESTORE_ME}"
 
 # Export AWS Credentials into env file for cron job
-#printenv | sed 's/^\([a-zA-Z0-9_]*\)=\(.*\)$/export \1="\2"/g' | grep -E "^export AWS" > /root/project_env.sh
-
+printenv | sed 's/^\([a-zA-Z0-9_]*\)=\(.*\)$/export \1="\2"/g' | grep -E "^export AWS" > /root/project_env.sh
 
 if [ -n "${MONGODB_URI}" ]; then
     echo "=> Create a backup on the startup"
